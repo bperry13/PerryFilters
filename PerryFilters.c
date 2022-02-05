@@ -36,6 +36,7 @@
 //bmp compression methods
 //none:
 #define BI_RGB 0
+#define THREAD_COUNT 4
 
 ////////////////////////////////////////////////////////////////////////////////
 //DATA STRUCTURES
@@ -73,86 +74,107 @@ typedef struct Pixel {
     unsigned char r,g,b;
 } Pixel;
 
-Pixel rgb_index[MAX_IMAGE_SIZE][MAX_IMAGE_SIZE];
-Pixel blur_rgb_index[MAX_IMAGE_SIZE][MAX_IMAGE_SIZE];
 
-typedef enum pixel_colors {
-    BLUE = 0,
-    GREEN = 1,
-    RED = 2
-} PIXEL_COLORS;
+////////////////////////////////////////////////////////////////////////////////
+//FUNCTIONS
 
-//apply blur filter
-unsigned char blur_filter(int i, int j, PIXEL_COLORS color);
+/**
+ * Read Pixels from BMP file based on width and height.
+ *
+ * @param  file: A pointer to the file being read
+ * @param  pArr: Pixel array to store the pixels being read
+ * @param  width: Width of the pixel array of this image
+ * @param  height: Height of the pixel array of this image
+ */
+void readPixelsBMP(FILE* file, struct Pixel** pArr, int width, int height) {
+    int pitch, padding;
+    int x, y;
 
-//global data to hold height & width of the image data
-int img_height = 0;
-int img_width = 0;
+    //get padding
+    pitch = width*3;
+    if (pitch % 4 != 0) {
+        pitch += 4 - (pitch % 4);
+    }
+    padding = pitch - (width * 3);
+    printf("read pitch is: %d\t", pitch);
+    printf("read width is: %d:\t", width);
+    printf("read padding is: %d\n", padding);
 
-//thread functions
-void* l_upper_blur (void* unused)
-{
-    int i,j;
-    int height = (img_height + 1) / 2;
-    int width = (img_width + 1) / 2;
-    for (j = 0;j < height;j++)
-    {
-        for (i = 0;i < width;i++)
-        {
-            blur_rgb_index[i][j].b = blur_filter(i, j, BLUE);
-            blur_rgb_index[i][j].g = blur_filter(i, j, GREEN);
-            blur_rgb_index[i][j].r = blur_filter(i, j, RED);
+
+    //iterate scanlines
+    for (y = 0; y < height; y++) {
+        for (x = 0; x < width; x++) {
+            fread(&pArr[y][x].b, sizeof(unsigned char), 1, file);
+            fread(&pArr[y][x].g, sizeof(unsigned char), 1, file);
+            fread(&pArr[y][x].r, sizeof(unsigned char), 1, file);
+        }
+
+        // skip padding
+        fseek(file, padding, SEEK_CUR);
+    }
+}
+
+/**
+ * Write Pixels from BMP file based on width and height.
+ *
+ * @param  file: A pointer to the file being read or written
+ * @param  pArr: Pixel array of the image to write to the file
+ * @param  width: Width of the pixel array of this image
+ * @param  height: Height of the pixel array of this image
+ */
+void writePixelsBMP(FILE* file, struct Pixel** pArr, int width, int height) {
+    int pitch, padding;
+    int x, y, p;
+
+    //get padding
+    pitch = width*3;
+    if (pitch % 4 != 0) {
+        pitch += 4 - (pitch % 4);
+    }
+    padding = pitch - (width * 3);
+    printf("write pitch is: %d\t", pitch);
+    printf("write width is: %d:\t", width);
+    printf("write padding is: %d\n", padding);
+
+    //iterate scanlines
+    for (y = 0; y < height; y++) {
+        for (x = 0; x < width; x++) {
+            fwrite(&pArr[y][x].b, sizeof(unsigned char), 1, file);
+            fwrite(&pArr[y][x].g, sizeof(unsigned char), 1, file);
+            fwrite(&pArr[y][x].r, sizeof(unsigned char), 1, file);
+        }
+
+        // skip padding write for loop to add chars
+        for (p = 0; p < padding; p++) {
+            fwrite(" ", sizeof(unsigned char), 1, file);
         }
     }
 }
 
-void* l_lower_blur (void* unused)
-{
-    int i,j;
-    int height = img_height;
-    int width = (img_width + 1) / 2;
-    for (j = (img_height / 2); j < height; j++)
-    {
-        for (i = 0;i < width;i++)
-        {
-            blur_rgb_index[i][j].b = blur_filter(i, j, BLUE);
-            blur_rgb_index[i][j].g = blur_filter(i, j, GREEN);
-            blur_rgb_index[i][j].r = blur_filter(i, j, RED);
-        }
-    }
+/* Creates a new image and returns it.
+*
+ * @param  pArr: Pixel array of this image.
+ * @param  width: Width of this image.
+ * @param  height: Height of this image.
+ * @return A pointer to a new image.
+*/
+Image* image_create(struct Pixel** pArr, int width, int height) {
+
+    //allocate mem
+    Image* img = malloc(sizeof(struct Image));
+    //assign height
+    img->height = height;
+    //assign width
+    img->width = width;
+    //assign pixel array
+    img->pArr = pArr;
+
+    //return new image
+    return img;
 }
 
-void* r_upper_blur (void* unused)
-{
-    int i,j;
-    int height = (img_height + 1) / 2;
-    int width = img_width;
-    for (j = 0;j < height;j++)
-    {
-        for (i = (img_width / 2); i < width; i++)
-        {
-            blur_rgb_index[i][j].b = blur_filter(i, j, BLUE);
-            blur_rgb_index[i][j].g = blur_filter(i, j, GREEN);
-            blur_rgb_index[i][j].r = blur_filter(i, j, RED);
-        }
-    }
-}
 
-void* r_lower_blur (void* unused)
-{
-    int i,j;
-    int height = img_height;
-    int width = img_width;
-    for (j = (img_height / 2); j < height; j++)
-    {
-        for (i = (img_width / 2); i < width; i++)
-        {
-            blur_rgb_index[i][j].b = blur_filter(i, j, BLUE);
-            blur_rgb_index[i][j].g = blur_filter(i, j, GREEN);
-            blur_rgb_index[i][j].r = blur_filter(i, j, RED);
-        }
-    }
-}
+
 
 ////////////////////////////////////////////////////////////////////////////////
 //MAIN PROGRAM CODE
@@ -161,12 +183,15 @@ void* r_lower_blur (void* unused)
 int main(int argc, char* argv[]) {
 
     //input parameters
-    char *input = argv[optind];
-    char *output = argv[optind + 1];
+    char *input = argv[optind + 1];
+    char *output = argv[optind + 2];
+    char *filters;
+    filters = "bc";
+    int filter, bflag = 0, cflag = 0;
 
+    //header functionality
     BMP_Header bmp_header;
     DIB_Header dib_header;
-    int i, j;
 
     //open input file
     FILE* file = fopen(input, "rb");
@@ -195,37 +220,40 @@ int main(int argc, char* argv[]) {
     //test to see image width and height
     printf("Image size = %d x %d\n", dib_header.width, dib_header.height);
 
+    //allocate mem for pixels
+    struct Pixel** pixels = (struct Pixel**)malloc(sizeof(struct Pixel*) * dib_header.height);
+    for (int p = 0; p < dib_header.height; p++) {
+        pixels[p] = (struct Pixel*)malloc(sizeof(struct Pixel) * dib_header.width);
+    }
 
-    img_height = dib_header.height;
-    img_width = dib_header.width;
+    //read pixel array
+    readPixelsBMP(file, pixels, dib_header.width, dib_header.height);
 
-    //read image data
-    fseek(file, bmp_header.offset_pixel_array, SEEK_SET);
+    //create the new image
+    Image* img = image_create(pixels, dib_header.width, dib_header.height);
 
-    //
-    for (j=0; j < dib_header.height; j++) {
-        for (i=0; i < dib_header.width; i++) {
-            fread(&rgb_index[i][j].b, sizeof(unsigned char), 1, file);
-            fread(&rgb_index[i][j].g, sizeof(unsigned char), 1, file);
-            fread(&rgb_index[i][j].r, sizeof(unsigned char), 1, file);
+    //apply blur or swiss cheese filter based on the flag
+    while ((filter = getopt(argc, argv, filters)) != -1) {
+        switch(filter) {
+            case 'b':
+                bflag = 1;
+                printf("applying blur filter...\n");
+                //TODO: apply blur filter
+
+                break;
+            case 'c':
+                cflag = 1;
+                printf("applying swiss cheese filter...\n");
+                //TODO: apply swiss cheese filter
+
+                break;
+            case '?':
+                printf("ERROR: unknown filter -%c.\n", optopt);
+                break;
+            default:
+                printf("ERROR: default switch case\n");
         }
     }
-    fclose(file);
-
-    //create threads to process the image
-    pthread_t l_upper_tid,l_lower_tid,r_upper_tid,r_lower_tid;
-
-    pthread_create(&l_upper_tid, NULL, &l_upper_blur, NULL);
-    pthread_join(l_upper_tid, NULL);
-
-    pthread_create(&l_lower_tid, NULL, &l_lower_blur, NULL);
-    pthread_join(l_lower_tid, NULL);
-
-    pthread_create(&r_upper_tid, NULL, &r_upper_blur, NULL);
-    pthread_join(r_upper_tid, NULL);
-
-    pthread_create(&r_lower_tid, NULL, &r_lower_blur, NULL);
-    pthread_join(r_lower_tid, NULL);
 
     //open output file
     FILE* output_file = fopen(output, "wb");
@@ -245,6 +273,7 @@ int main(int argc, char* argv[]) {
     fwrite(&dib_header, sizeof(DIB_Header), 1, output_file);
 
     //write the filtered pixels to the array
+    /*
     for (j=0; j < dib_header.height; j++) {
         for (i=0; i < dib_header.width; i++) {
             fwrite(&blur_rgb_index[i][j].b, sizeof(unsigned char), 1, output_file);
@@ -252,103 +281,11 @@ int main(int argc, char* argv[]) {
             fwrite(&blur_rgb_index[i][j].r, sizeof(unsigned char), 1, output_file);
         }
     }
+    */
+
+    writePixelsBMP(output_file, pixels, dib_header.width, dib_header.height);
     fclose(output_file);
     printf("Success! Your filtered image has been saved to the root folder.\n");
+    return EXIT_SUCCESS;
 }
 
-unsigned char blur_filter(int i, int j, PIXEL_COLORS color)
-{
-    int q, r;
-    switch(color)
-    {
-        case BLUE:
-        {
-            int sum = 0;
-            int count = 0;
-            int avg = 0;
-            for(q = i-1; q <= i+1 ; q++)
-            {
-                if(q < 0 || q >= img_height)
-                {
-                    continue;
-                }
-                for(r = j-1; r <= j+1; r++)
-                {
-                    if(r < 0 || r >= img_width)
-                    {
-                        continue;
-                    }
-                    sum = sum + rgb_index[q][r].b;
-                    count++;
-                }
-            }
-            if(count)
-            {
-                avg = sum/count;
-            }
-            return avg;
-        }
-            break;
-
-        case GREEN:
-        {
-            int sum = 0;
-            int count = 0;
-            int avg = 0;
-            for(q = i-1; q <= i+1 ; q++)
-            {
-                if(q < 0 || q >= img_height)
-                    continue;
-                for(r = j-1; r<= j+1; r++)
-                {
-                    if(r < 0 || r >= img_width)
-                    {
-                        continue;
-                    }
-                    sum = sum + rgb_index[q][r].g;
-                    count++;
-                }
-            }
-            if(count)
-            {
-                avg = sum/count;
-            }
-            return avg;
-        }
-            break;
-
-        case RED:
-        {
-            int sum = 0;
-            int count = 0;
-            int avg = 0;
-            for(q = i-1; q <= i+1 ; q++)
-            {
-                if(q < 0 || q >= img_height)
-                {
-                    continue;
-                }
-                for(r = j-1; r<= j+1; r++)
-                {
-                    if(r < 0 || r >= img_width)
-                    {
-                        continue;
-                    }
-                    sum = sum + rgb_index[q][r].r;
-                    count++;
-                }
-            }
-            if(count)
-            {
-                avg = sum/count;
-            }
-            return avg;
-        }
-            break;
-
-        default:
-        {
-            //do nothing
-        }
-    }
-}
