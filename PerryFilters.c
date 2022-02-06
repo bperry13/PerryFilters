@@ -96,10 +96,6 @@ void readPixelsBMP(FILE* file, struct Pixel** pArr, int width, int height) {
         pitch += 4 - (pitch % 4);
     }
     padding = pitch - (width * 3);
-    printf("read pitch is: %d\t", pitch);
-    printf("read width is: %d:\t", width);
-    printf("read padding is: %d\n", padding);
-
 
     //iterate scanlines
     for (y = 0; y < height; y++) {
@@ -132,9 +128,6 @@ void writePixelsBMP(FILE* file, struct Pixel** pArr, int width, int height) {
         pitch += 4 - (pitch % 4);
     }
     padding = pitch - (width * 3);
-    printf("write pitch is: %d\t", pitch);
-    printf("write width is: %d:\t", width);
-    printf("write padding is: %d\n", padding);
 
     //iterate scanlines
     for (y = 0; y < height; y++) {
@@ -173,8 +166,53 @@ Image* image_create(struct Pixel** pArr, int width, int height) {
     return img;
 }
 
+/**
+ * Box Blur Filter
+ *
+ * @param img: image for pixel array
+ */
+ void blur_filter(Image* img) {
+    int x, y, i=0, j=0;
+    int red = 0, green = 0, blue = 0;
+    int count = 0;
+    for (x = -1 ; x < 2 ; x++ ) {
+        for (y = -1 ; y < 2 ; y++ ) {
+            if (i + x >= 0 && i + x < img->width && j + y >= 0 && j + y < img->height){
+                red += img->pArr[i+x][j+y].r;
+                blue += img->pArr[i+x][j+y].b;
+                green += img->pArr[i+x][j+y].g;
+                count++;
+            }
+        }
+    }
+    img->pArr[j][i].r = red / count;
+    img->pArr[j][i].b = blue / count;
+    img->pArr[j][i].g = green / count;
+ }
 
+/**
+* Swiss Cheese Filter
+*
+* @param img: image for pixel array
+*/
+void cheese_filter(Image* img) {
 
+    int r, g, b;
+
+    for (int y = 0; y < img->height; y++) {
+        for (int x = 0; x < img->width; x++) {
+
+            b = 0;
+            g = img->pArr[y][x].g;
+            r = img->pArr[y][x].r;
+
+            //write average value of pixels
+            img->pArr[y][x].b = b;
+            img->pArr[y][x].g = g;
+            img->pArr[y][x].r = r;
+        }
+    }
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 //MAIN PROGRAM CODE
@@ -239,13 +277,13 @@ int main(int argc, char* argv[]) {
                 bflag = 1;
                 printf("applying blur filter...\n");
                 //TODO: apply blur filter
-
+                blur_filter(img);
                 break;
             case 'c':
                 cflag = 1;
                 printf("applying swiss cheese filter...\n");
                 //TODO: apply swiss cheese filter
-
+                cheese_filter(img);
                 break;
             case '?':
                 printf("ERROR: unknown filter -%c.\n", optopt);
@@ -272,19 +310,14 @@ int main(int argc, char* argv[]) {
     //write dib header to output file
     fwrite(&dib_header, sizeof(DIB_Header), 1, output_file);
 
-    //write the filtered pixels to the array
-    /*
-    for (j=0; j < dib_header.height; j++) {
-        for (i=0; i < dib_header.width; i++) {
-            fwrite(&blur_rgb_index[i][j].b, sizeof(unsigned char), 1, output_file);
-            fwrite(&blur_rgb_index[i][j].g, sizeof(unsigned char), 1, output_file);
-            fwrite(&blur_rgb_index[i][j].r, sizeof(unsigned char), 1, output_file);
-        }
-    }
-    */
-
+    //write pixels to output file
     writePixelsBMP(output_file, pixels, dib_header.width, dib_header.height);
     fclose(output_file);
+
+    //dealloc mem
+    free(img);
+    free(pixels);
+
     printf("Success! Your filtered image has been saved to the root folder.\n");
     return EXIT_SUCCESS;
 }
