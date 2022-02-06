@@ -172,22 +172,101 @@ Image* image_create(struct Pixel** pArr, int width, int height) {
  * @param img: image for pixel array
  */
  void blur_filter(Image* img) {
-    int x, y, i=0, j=0;
-    int red = 0, green = 0, blue = 0;
-    int count = 0;
-    for (x = -1 ; x < 2 ; x++ ) {
-        for (y = -1 ; y < 2 ; y++ ) {
-            if (i + x >= 0 && i + x < img->width && j + y >= 0 && j + y < img->height){
-                red += img->pArr[i+x][j+y].r;
-                blue += img->pArr[i+x][j+y].b;
-                green += img->pArr[i+x][j+y].g;
-                count++;
+
+    int red = 0, green = 0, blue = 0, counter = 0;
+    int first_col, last_col, width, height;
+    width = img-> width;
+    height = img->height;
+    first_col = 0;
+    last_col = img->width;
+
+    // for each row
+    for (int y = 0; y < height; y++) {
+        // for each column
+        for (int x = 0; x < width; x++) {
+
+            //reset values for each iteration
+            red = 0;
+            blue = 0;
+            green = 0;
+            counter = 0;
+
+            // top left corner pixel of 3x3
+            if (y + 1 < width && x - 1 >= first_col) {
+                red += img->pArr[y + 1][x - 1].r;
+                green += img->pArr[y + 1][x - 1].g;
+                blue += img->pArr[y + 1][x - 1].b;
+                counter++;
             }
+
+            // top middle pixel of 3x3
+            if (y + 1 < width) {
+                red += img->pArr[y + 1][x].r;
+                green += img->pArr[y + 1][x].g;
+                blue += img->pArr[y + 1][x].b;
+                counter++;
+            }
+
+            // top right corner pixel of 3x3
+            if (y + 1 < width && x + 1 < last_col) {
+                red += img->pArr[y + 1][x + 1].r;
+                green += img->pArr[y + 1][x + 1].g;
+                blue += img->pArr[y + 1][x + 1].b;
+                counter++;
+            }
+
+            // middle left pixel of 3x3
+            if (x - 1 >= first_col) {
+                red += img->pArr[y][x - 1].r;
+                green += img->pArr[y][x - 1].g;
+                blue += img->pArr[y][x - 1].b;
+                counter++;
+            }
+
+            // current pixel aka middle pixel of 3x3
+            red += img->pArr[y][x].r;
+            green += img->pArr[y][x].g;
+            blue += img->pArr[y][x].b;
+            counter++;
+
+            // middle right pixel of 3x3
+            if (x + 1 < last_col) {
+                red += img->pArr[y][x + 1].r;
+                green += img->pArr[y][x + 1].g;
+                blue += img->pArr[y][x + 1].b;
+                counter++;
+            }
+
+            // bottom left pixel of 3x3
+            if (y - 1 >= 0 && x - 1 >= first_col) {
+                red += img->pArr[y - 1][x - 1].r;
+                green += img->pArr[y - 1][x - 1].g;
+                blue += img->pArr[y - 1][x - 1].b;
+                counter++;
+            }
+
+            // bottom middle pixel of 3x3
+            if (y - 1 >= 0) {
+                red += img->pArr[y - 1][x].r;
+                green += img->pArr[y - 1][x].g;
+                blue += img->pArr[y - 1][x].b;
+                counter++;
+            }
+
+            // bottom right pixel of 3x3
+            if (y - 1 >= 0 && x + 1 < last_col) {
+                red += img->pArr[y - 1][x + 1].r;
+                green += img->pArr[y - 1][x + 1].g;
+                blue += img->pArr[y - 1][x + 1].b;
+                counter++;
+            }
+
+            //write average value of pixels
+            img->pArr[y][x].b = blue / counter;
+            img->pArr[y][x].g = green / counter;
+            img->pArr[y][x].r = red / counter;
         }
     }
-    img->pArr[j][i].r = red / count;
-    img->pArr[j][i].b = blue / count;
-    img->pArr[j][i].g = green / count;
  }
 
 /**
