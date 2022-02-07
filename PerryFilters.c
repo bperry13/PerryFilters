@@ -33,9 +33,6 @@
 #define MAX_IMAGE_SIZE 4096
 
 //TODO: finish me
-//bmp compression methods
-//none:
-#define BI_RGB 0
 #define THREAD_COUNT 4
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -277,13 +274,26 @@ Image* image_create(struct Pixel** pArr, int width, int height) {
 void cheese_filter(Image* img) {
 
     int r, g, b;
+    int x, y, h, w;
+    int width, height, radius;
 
-    for (int y = 0; y < img->height; y++) {
-        for (int x = 0; x < img->width; x++) {
+    for (y = 0; y < img->height; y++) {
+        for (x = 0; x < img->width; x++) {
 
             b = 0;
             g = img->pArr[y][x].g;
             r = img->pArr[y][x].r;
+
+            //find pixels for each swiss cheese hole
+            width = img->width;
+            height = img->height;
+            h = img->height / THREAD_COUNT;
+            w = img->width / THREAD_COUNT;
+            for (int i = 0; i < width; i + w) {
+                for (int j = 0; j < height; j + h) {
+
+                }
+            }
 
             //write average value of pixels
             img->pArr[y][x].b = b;
