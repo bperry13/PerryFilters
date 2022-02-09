@@ -4,10 +4,10 @@
  * The two image filters blur filter and swiss cheese filter. The resulting file
  * will be saved back to a BMP file that can be viewed on the host system.
  *
- * Completion time: 20 hours
+ * Completion time: 24 hours
  *
  * @author BRETT PERRY, PROFESSOR ACUNA
- * @version 2.6.22
+ * @version 2.7.22
  */
 
 
@@ -176,13 +176,9 @@ Image* image_create(struct Pixel** pArr, int width, int height) {
 void *blur_runner(void *args) {
 
     inst *params = (inst *) args;
-    int y, x;
     int red, blue, green, counter;
     int height, width;
-    //int first_col, last_col;
 
-    // x = 0;
-    // y = 0;
     red = 0;
     blue = 0;
     green = 0;
@@ -190,12 +186,10 @@ void *blur_runner(void *args) {
     height = params->img->height;
     width = params->img->width;
     Pixel** filtered = params->filtered;
-    // first_col = params->first_col;
-    // last_col = params->last_col;
 
-    // i width, j height
-    for (int i = params->start; i < params->finish; i++) {
-        for (int j = 0; j < height; j++) {
+    //box blur algo
+    for (int x = params->start; x < params->finish; x++) {
+        for (int y = 0; y < height; y++) {
 
             red = 0;
             blue = 0;
@@ -203,252 +197,177 @@ void *blur_runner(void *args) {
             counter = 0;
 
             // top left corner
-            if (i == 0 && j == 0) {
-                red += params->img->pArr[j][i].r;
-                blue += params->img->pArr[j][i].b;
-                green += params->img->pArr[j][i].g;
-                red += params->img->pArr[j][i + 1].r;
-                blue += params->img->pArr[j][i + 1].b;
-                green += params->img->pArr[j][i + 1].g;
-                red += params->img->pArr[j + 1][i].r;
-                blue += params->img->pArr[j + 1][i].b;
-                green += params->img->pArr[j + 1][i].g;
-                red += params->img->pArr[j + 1][i + 1].r;
-                blue += params->img->pArr[j + 1][i + 1].b;
-                green += params->img->pArr[j + 1][i + 1].g;
+            if (x == 0 && y == 0) {
+                red += params->img->pArr[y][x].r;
+                blue += params->img->pArr[y][x].b;
+                green += params->img->pArr[y][x].g;
+                red += params->img->pArr[y][x + 1].r;
+                blue += params->img->pArr[y][x + 1].b;
+                green += params->img->pArr[y][x + 1].g;
+                red += params->img->pArr[y + 1][x].r;
+                blue += params->img->pArr[y + 1][x].b;
+                green += params->img->pArr[y + 1][x].g;
+                red += params->img->pArr[y + 1][x + 1].r;
+                blue += params->img->pArr[y + 1][x + 1].b;
+                green += params->img->pArr[y + 1][x + 1].g;
                 counter = 4;
-            } else if (j == 0 && i == width -1) { // top right
-                red += params->img->pArr[j][i].r;
-                blue += params->img->pArr[j][i].b;
-                green += params->img->pArr[j][i].g;
-                red += params->img->pArr[j][i - 1].r;
-                blue += params->img->pArr[j][i - 1].b;
-                green += params->img->pArr[j][i - 1].g;
-                red += params->img->pArr[j + 1][i].r;
-                blue += params->img->pArr[j + 1][i].b;
-                green += params->img->pArr[j + 1][i].g;
-                red += params->img->pArr[j + 1][i - 1].r;
-                blue += params->img->pArr[j + 1][i - 1].b;
-                green += params->img->pArr[j + 1][i - 1].g;
+            } else if (y == 0 && x == width - 1) { // top right
+                red += params->img->pArr[y][x].r;
+                blue += params->img->pArr[y][x].b;
+                green += params->img->pArr[y][x].g;
+                red += params->img->pArr[y][x - 1].r;
+                blue += params->img->pArr[y][x - 1].b;
+                green += params->img->pArr[y][x - 1].g;
+                red += params->img->pArr[y + 1][x].r;
+                blue += params->img->pArr[y + 1][x].b;
+                green += params->img->pArr[y + 1][x].g;
+                red += params->img->pArr[y + 1][x - 1].r;
+                blue += params->img->pArr[y + 1][x - 1].b;
+                green += params->img->pArr[y + 1][x - 1].g;
                 counter = 4;
-            } else if (j == height - 1 && i == 0) { // bottom left
-                red += params->img->pArr[j][i].r;
-                blue += params->img->pArr[j][i].b;
-                green += params->img->pArr[j][i].g;
-                red += params->img->pArr[j][i + 1].r;
-                blue += params->img->pArr[j][i + 1].b;
-                green += params->img->pArr[j][i + 1].g;
-                red += params->img->pArr[j - 1][i].r;
-                blue += params->img->pArr[j - 1][i].b;
-                green += params->img->pArr[j - 1][i].g;
-                red += params->img->pArr[j - 1][i + 1].r;
-                blue += params->img->pArr[j - 1][i + 1].b;
-                green += params->img->pArr[j - 1][i + 1].g;
+            } else if (y == height - 1 && x == 0) { // bottom left
+                red += params->img->pArr[y][x].r;
+                blue += params->img->pArr[y][x].b;
+                green += params->img->pArr[y][x].g;
+                red += params->img->pArr[y][x + 1].r;
+                blue += params->img->pArr[y][x + 1].b;
+                green += params->img->pArr[y][x + 1].g;
+                red += params->img->pArr[y - 1][x].r;
+                blue += params->img->pArr[y - 1][x].b;
+                green += params->img->pArr[y - 1][x].g;
+                red += params->img->pArr[y - 1][x + 1].r;
+                blue += params->img->pArr[y - 1][x + 1].b;
+                green += params->img->pArr[y - 1][x + 1].g;
                 counter = 4;
-            } else if (j == height - 1 && i == width - 1) { // bottom right
-                red += params->img->pArr[j][i].r;
-                blue += params->img->pArr[j][i].b;
-                green += params->img->pArr[j][i].g;
-                red += params->img->pArr[j][i - 1].r;
-                blue += params->img->pArr[j][i - 1].b;
-                green += params->img->pArr[j][i - 1].g;
-                red += params->img->pArr[j - 1][i].r;
-                blue += params->img->pArr[j - 1][i].b;
-                green += params->img->pArr[j - 1][i].g;
-                red += params->img->pArr[j - 1][i - 1].r;
-                blue += params->img->pArr[j - 1][i - 1].b;
-                green += params->img->pArr[j - 1][i - 1].g;
+            } else if (y == height - 1 && x == width - 1) { // bottom right
+                red += params->img->pArr[y][x].r;
+                blue += params->img->pArr[y][x].b;
+                green += params->img->pArr[y][x].g;
+                red += params->img->pArr[y][x - 1].r;
+                blue += params->img->pArr[y][x - 1].b;
+                green += params->img->pArr[y][x - 1].g;
+                red += params->img->pArr[y - 1][x].r;
+                blue += params->img->pArr[y - 1][x].b;
+                green += params->img->pArr[y - 1][x].g;
+                red += params->img->pArr[y - 1][x - 1].r;
+                blue += params->img->pArr[y - 1][x - 1].b;
+                green += params->img->pArr[y - 1][x - 1].g;
                 counter = 4;
-            } else if (j == 0) { // top row
-                red += params->img->pArr[j][i].r;
-                blue += params->img->pArr[j][i].b;
-                green += params->img->pArr[j][i].g;
-                red += params->img->pArr[j][i - 1].r;
-                blue += params->img->pArr[j][i - 1].b;
-                green += params->img->pArr[j][i - 1].g;
-                red += params->img->pArr[j][i + 1].r;
-                blue += params->img->pArr[j][i + 1].b;
-                green += params->img->pArr[j][i + 1].g;
-                red += params->img->pArr[j + 1][i].r;
-                blue += params->img->pArr[j + 1][i].b;
-                green += params->img->pArr[j + 1][i].g;
-                red += params->img->pArr[j + 1][i - 1].r;
-                blue += params->img->pArr[j + 1][i - 1].b;
-                green += params->img->pArr[j + 1][i - 1].g;
-                red += params->img->pArr[j + 1][i + 1].r;
-                blue += params->img->pArr[j + 1][i + 1].b;
-                green += params->img->pArr[j + 1][i + 1].g;
+            } else if (y == 0) { // top row
+                red += params->img->pArr[y][x].r;
+                blue += params->img->pArr[y][x].b;
+                green += params->img->pArr[y][x].g;
+                red += params->img->pArr[y][x - 1].r;
+                blue += params->img->pArr[y][x - 1].b;
+                green += params->img->pArr[y][x - 1].g;
+                red += params->img->pArr[y][x + 1].r;
+                blue += params->img->pArr[y][x + 1].b;
+                green += params->img->pArr[y][x + 1].g;
+                red += params->img->pArr[y + 1][x].r;
+                blue += params->img->pArr[y + 1][x].b;
+                green += params->img->pArr[y + 1][x].g;
+                red += params->img->pArr[y + 1][x - 1].r;
+                blue += params->img->pArr[y + 1][x - 1].b;
+                green += params->img->pArr[y + 1][x - 1].g;
+                red += params->img->pArr[y + 1][x + 1].r;
+                blue += params->img->pArr[y + 1][x + 1].b;
+                green += params->img->pArr[y + 1][x + 1].g;
                 counter = 6;
-            } else if (j == height - 1) { // bottom row
-                red += params->img->pArr[j][i].r;
-                blue += params->img->pArr[j][i].b;
-                green += params->img->pArr[j][i].g;
-                red += params->img->pArr[j][i - 1].r;
-                blue += params->img->pArr[j][i - 1].b;
-                green += params->img->pArr[j][i - 1].g;
-                red += params->img->pArr[j][i + 1].r;
-                blue += params->img->pArr[j][i + 1].b;
-                green += params->img->pArr[j][i + 1].g;
-                red += params->img->pArr[j - 1][i].r;
-                blue += params->img->pArr[j - 1][i].b;
-                green += params->img->pArr[j - 1][i].g;
-                red += params->img->pArr[j - 1][i - 1].r;
-                blue += params->img->pArr[j - 1][i - 1].b;
-                green += params->img->pArr[j - 1][i - 1].g;
-                red += params->img->pArr[j - 1][i + 1].r;
-                blue += params->img->pArr[j - 1][i + 1].b;
-                green += params->img->pArr[j - 1][i + 1].g;
+            } else if (y == height - 1) { // bottom row
+                red += params->img->pArr[y][x].r;
+                blue += params->img->pArr[y][x].b;
+                green += params->img->pArr[y][x].g;
+                red += params->img->pArr[y][x - 1].r;
+                blue += params->img->pArr[y][x - 1].b;
+                green += params->img->pArr[y][x - 1].g;
+                red += params->img->pArr[y][x + 1].r;
+                blue += params->img->pArr[y][x + 1].b;
+                green += params->img->pArr[y][x + 1].g;
+                red += params->img->pArr[y - 1][x].r;
+                blue += params->img->pArr[y - 1][x].b;
+                green += params->img->pArr[y - 1][x].g;
+                red += params->img->pArr[y - 1][x - 1].r;
+                blue += params->img->pArr[y - 1][x - 1].b;
+                green += params->img->pArr[y - 1][x - 1].g;
+                red += params->img->pArr[y - 1][x + 1].r;
+                blue += params->img->pArr[y - 1][x + 1].b;
+                green += params->img->pArr[y - 1][x + 1].g;
                 counter = 6;
-            } else if (i == 0) { // left column
-                red += params->img->pArr[j][i].r;
-                blue += params->img->pArr[j][i].b;
-                green += params->img->pArr[j][i].g;
-                red += params->img->pArr[j][i + 1].r;
-                blue += params->img->pArr[j][i + 1].b;
-                green += params->img->pArr[j][i + 1].g;
-                red += params->img->pArr[j - 1][i].r;
-                blue += params->img->pArr[j - 1][i].b;
-                green += params->img->pArr[j - 1][i].g;
-                red += params->img->pArr[j - 1][i + 1].r;
-                blue += params->img->pArr[j - 1][i + 1].b;
-                green += params->img->pArr[j - 1][i + 1].g;
-                red += params->img->pArr[j + 1][i].r;
-                blue += params->img->pArr[j + 1][i].b;
-                green += params->img->pArr[j + 1][i].g;
-                red += params->img->pArr[j + 1][i + 1].r;
-                blue += params->img->pArr[j + 1][i + 1].b;
-                green += params->img->pArr[j + 1][i + 1].g;
+            } else if (x == 0) { // left column
+                red += params->img->pArr[y][x].r;
+                blue += params->img->pArr[y][x].b;
+                green += params->img->pArr[y][x].g;
+                red += params->img->pArr[y][x + 1].r;
+                blue += params->img->pArr[y][x + 1].b;
+                green += params->img->pArr[y][x + 1].g;
+                red += params->img->pArr[y - 1][x].r;
+                blue += params->img->pArr[y - 1][x].b;
+                green += params->img->pArr[y - 1][x].g;
+                red += params->img->pArr[y - 1][x + 1].r;
+                blue += params->img->pArr[y - 1][x + 1].b;
+                green += params->img->pArr[y - 1][x + 1].g;
+                red += params->img->pArr[y + 1][x].r;
+                blue += params->img->pArr[y + 1][x].b;
+                green += params->img->pArr[y + 1][x].g;
+                red += params->img->pArr[y + 1][x + 1].r;
+                blue += params->img->pArr[y + 1][x + 1].b;
+                green += params->img->pArr[y + 1][x + 1].g;
                 counter = 6;
-            } else if (i == width - 1) { // right column
-                red += params->img->pArr[j][i].r;
-                blue += params->img->pArr[j][i].b;
-                green += params->img->pArr[j][i].g;
-                red += params->img->pArr[j][i - 1].r;
-                blue += params->img->pArr[j][i - 1].b;
-                green += params->img->pArr[j][i - 1].g;
-                red += params->img->pArr[j - 1][i].r;
-                blue += params->img->pArr[j - 1][i].b;
-                green += params->img->pArr[j - 1][i].g;
-                red += params->img->pArr[j - 1][i - 1].r;
-                blue += params->img->pArr[j - 1][i - 1].b;
-                green += params->img->pArr[j - 1][i - 1].g;
-                red += params->img->pArr[j + 1][i].r;
-                blue += params->img->pArr[j + 1][i].b;
-                green += params->img->pArr[j + 1][i].g;
-                red += params->img->pArr[j + 1][i - 1].r;
-                blue += params->img->pArr[j + 1][i - 1].b;
-                green += params->img->pArr[j + 1][i - 1].g;
+            } else if (x == width - 1) { // right column
+                red += params->img->pArr[y][x].r;
+                blue += params->img->pArr[y][x].b;
+                green += params->img->pArr[y][x].g;
+                red += params->img->pArr[y][x - 1].r;
+                blue += params->img->pArr[y][x - 1].b;
+                green += params->img->pArr[y][x - 1].g;
+                red += params->img->pArr[y - 1][x].r;
+                blue += params->img->pArr[y - 1][x].b;
+                green += params->img->pArr[y - 1][x].g;
+                red += params->img->pArr[y - 1][x - 1].r;
+                blue += params->img->pArr[y - 1][x - 1].b;
+                green += params->img->pArr[y - 1][x - 1].g;
+                red += params->img->pArr[y + 1][x].r;
+                blue += params->img->pArr[y + 1][x].b;
+                green += params->img->pArr[y + 1][x].g;
+                red += params->img->pArr[y + 1][x - 1].r;
+                blue += params->img->pArr[y + 1][x - 1].b;
+                green += params->img->pArr[y + 1][x - 1].g;
                 counter = 6;
             } else { // interior
-                red += params->img->pArr[j][i].r;
-                blue += params->img->pArr[j][i].b;
-                green += params->img->pArr[j][i].g;
-                red += params->img->pArr[j][i - 1].r;
-                blue += params->img->pArr[j][i - 1].b;
-                green += params->img->pArr[j][i - 1].g;
-                red += params->img->pArr[j][i + 1].r;
-                blue += params->img->pArr[j][i + 1].b;
-                green += params->img->pArr[j][i + 1].g;
-                red += params->img->pArr[j - 1][i].r;
-                blue += params->img->pArr[j - 1][i].b;
-                green += params->img->pArr[j - 1][i].g;
-                red += params->img->pArr[j - 1][i - 1].r;
-                blue += params->img->pArr[j - 1][i - 1].b;
-                green += params->img->pArr[j - 1][i - 1].g;
-                red += params->img->pArr[j - 1][i + 1].r;
-                blue += params->img->pArr[j - 1][i + 1].b;
-                green += params->img->pArr[j - 1][i + 1].g;
-                red += params->img->pArr[j + 1][i].r;
-                blue += params->img->pArr[j + 1][i].b;
-                green += params->img->pArr[j + 1][i].g;
-                red += params->img->pArr[j + 1][i - 1].r;
-                blue += params->img->pArr[j + 1][i - 1].b;
-                green += params->img->pArr[j + 1][i - 1].g;
-                red += params->img->pArr[j + 1][i + 1].r;
-                blue += params->img->pArr[j + 1][i + 1].b;
-                green += params->img->pArr[j + 1][i + 1].g;
+                red += params->img->pArr[y][x].r;
+                blue += params->img->pArr[y][x].b;
+                green += params->img->pArr[y][x].g;
+                red += params->img->pArr[y][x - 1].r;
+                blue += params->img->pArr[y][x - 1].b;
+                green += params->img->pArr[y][x - 1].g;
+                red += params->img->pArr[y][x + 1].r;
+                blue += params->img->pArr[y][x + 1].b;
+                green += params->img->pArr[y][x + 1].g;
+                red += params->img->pArr[y - 1][x].r;
+                blue += params->img->pArr[y - 1][x].b;
+                green += params->img->pArr[y - 1][x].g;
+                red += params->img->pArr[y - 1][x - 1].r;
+                blue += params->img->pArr[y - 1][x - 1].b;
+                green += params->img->pArr[y - 1][x - 1].g;
+                red += params->img->pArr[y - 1][x + 1].r;
+                blue += params->img->pArr[y - 1][x + 1].b;
+                green += params->img->pArr[y - 1][x + 1].g;
+                red += params->img->pArr[y + 1][x].r;
+                blue += params->img->pArr[y + 1][x].b;
+                green += params->img->pArr[y + 1][x].g;
+                red += params->img->pArr[y + 1][x - 1].r;
+                blue += params->img->pArr[y + 1][x - 1].b;
+                green += params->img->pArr[y + 1][x - 1].g;
+                red += params->img->pArr[y + 1][x + 1].r;
+                blue += params->img->pArr[y + 1][x + 1].b;
+                green += params->img->pArr[y + 1][x + 1].g;
                 counter = 9;
             }
 
-            // //params->img->pArr[i][j].r
-            // // top left corner pixel of 3x3
-            // if (y + 1 < width && x - 1 >= width) { // first_col) {
-            //     red += params->img->pArr[y + 1][x - 1].r;
-            //     green += params->img->pArr[y + 1][x - 1].g;
-            //     blue += params->img->pArr[y + 1][x - 1].b;
-            //     counter++;
-            // }
-
-            // // top middle pixel of 3x3
-            // if (y + 1 < width) {
-            //     red += params->img->pArr[y + 1][x].r;
-            //     green += params->img->pArr[y + 1][x].g;
-            //     blue += params->img->pArr[y + 1][x].b;
-            //     counter++;
-            // }
-
-            // // top right corner pixel of 3x3
-            // if (y + 1 < width && x + 1 < width) { // last_col) {
-            //     red += params->img->pArr[y + 1][x + 1].r;
-            //     green += params->img->pArr[y + 1][x + 1].g;
-            //     blue += params->img->pArr[y + 1][x + 1].b;
-            //     counter++;
-            // }
-
-            // // middle left pixel of 3x3
-            // if (x - 1 >= first_col) {
-            //     red += params->img->pArr[y][x - 1].r;
-            //     green += params->img->pArr[y][x - 1].g;
-            //     blue += params->img->pArr[y][x - 1].b;
-            //     counter++;
-            // }
-
-            // // current pixel aka middle pixel of 3x3
-            // red += params->img->pArr[y][x].r;
-            // green += params->img->pArr[y][x].g;
-            // blue += params->img->pArr[y][x].b;
-            // counter++;
-
-            // // middle right pixel of 3x3
-            // if (x + 1 < last_col) {
-            //     red += params->img->pArr[y][x + 1].r;
-            //     green += params->img->pArr[y][x + 1].g;
-            //     blue += params->img->pArr[y][x + 1].b;
-            //     counter++;
-            // }
-
-            // // bottom left pixel of 3x3
-            // if (y - 1 >= 0 && x - 1 >= first_col) {
-            //     red += params->img->pArr[y - 1][x - 1].r;
-            //     green += params->img->pArr[y - 1][x - 1].g;
-            //     blue += params->img->pArr[y - 1][x - 1].b;
-            //     counter++;
-            // }
-
-            // // bottom middle pixel of 3x3
-            // if (y - 1 >= 0) {
-            //     red += params->img->pArr[y - 1][x].r;
-            //     green += params->img->pArr[y - 1][x].g;
-            //     blue += params->img->pArr[y - 1][x].b;
-            //     counter++;
-            // }
-
-            // // bottom right pixel of 3x3
-            // if (y - 1 >= 0 && x + 1 < last_col) {
-            //     red += params->img->pArr[y - 1][x + 1].r;
-            //     green += params->img->pArr[y - 1][x + 1].g;
-            //     blue += params->img->pArr[y - 1][x + 1].b;
-            //     counter++;
-            // }
-
             //write average value of pixels
-            filtered[j][i].r = red / counter;
-            filtered[j][i].g = green / counter;
-            filtered[j][i].b = blue / counter;
-
-            // params->img->pArr[y][x].b = blue / counter;
-            // params->img->pArr[y][x].g = green / counter;
-            // params->img->pArr[y][x].r = red / counter;
+            filtered[y][x].r = red / counter;
+            filtered[y][x].g = green / counter;
+            filtered[y][x].b = blue / counter;
         }
     }
 
@@ -461,12 +380,6 @@ void *blur_runner(void *args) {
  * @param img: image for pixel array
  */
 void blur_filter(Image* img) {
-
-    // Image* result = malloc(sizeof(Image));
-    // result->pArr = (Pixel**) malloc(sizeof(Pixel*) * img->height);  // (img->height * img->width));
-    // for (int i = 0; i < img->height; i++) {
-    //     result->pArr[i] = malloc(sizeof(Pixel) * img->width);
-    // }
 
     // create new pixel array to write to
     Pixel** filtered = malloc(sizeof(Pixel*) * img->height);
@@ -484,7 +397,6 @@ void blur_filter(Image* img) {
         params[i].img = img;
         params[i].filtered = filtered;
         params[i].start = (img->width / THREAD_COUNT) * i;
-        //params[i].finish = params[i].start + (img->width / THREAD_COUNT);
         if (i < THREAD_COUNT - 1) params[i].finish = (i + 1) * (img->width / THREAD_COUNT);
         else params[i].finish = img->width;
     }
@@ -506,8 +418,42 @@ void blur_filter(Image* img) {
         free(temp[i]);
     }
     free(temp);
+}
 
-    // return result;
+/**
+* Runner for Swiss Cheese Filter multi-thread
+*
+* @param args: image for pixel array
+*/
+void *cheese_runner(void *args) {
+    inst *params = (inst *) args;
+    int red, blue, green, counter;
+    int height, width;
+    int x, y;
+
+    red = 0;
+    blue = 0;
+    green = 0;
+    counter = 0;
+    height = params->img->height;
+    width = params->img->width;
+    Pixel** filtered = params->filtered;
+
+    //filter image to yellow
+    for (int x = params->start; x < params->finish; x++) {
+        for (int y = 0; y < height; y++) {
+
+            //assign current pixel value to local var
+            red = params->img->pArr[y][x].r;
+            green = params->img->pArr[y][x].g;
+            blue = 0;
+
+            //filter image to yellow by eliminating blue
+            filtered[y][x].r = red;
+            filtered[y][x].g = green;
+            filtered[y][x].b = blue;
+        }
+    }
 }
 
 /**
@@ -515,39 +461,45 @@ void blur_filter(Image* img) {
 *
 * @param img: image for pixel array
 */
-void *cheese_filter(Image* img) {
+void cheese_filter(Image* img) {
 
-    int r, g, b;
-    int x, y, h, w;
-    int width, height, radius;
-
-    for (y = 0; y < img->height; y++) {
-        for (x = 0; x < img->width; x++) {
-
-            b = 0;
-            g = img->pArr[y][x].g;
-            r = img->pArr[y][x].r;
-
-            //find pixels for each swiss cheese hole
-            /*
-            width = img->width;
-            height = img->height;
-            h = img->height / THREAD_COUNT;
-            w = img->width / THREAD_COUNT;
-            for (int i = 0; i < width; i + w) {
-                for (int j = 0; j < height; j + h) {
-
-                }
-            }
-             */
-
-            //write average value of pixels
-            img->pArr[y][x].b = b;
-            img->pArr[y][x].g = g;
-            img->pArr[y][x].r = r;
-        }
+    // create new pixel array to write to
+    Pixel** filtered = malloc(sizeof(Pixel*) * img->height);
+    for (int i = 0; i < img->height; i++) {
+        filtered[i] = malloc(sizeof(Pixel) * img->width);
     }
-    pthread_exit(0);
+
+    //create an array of threads
+    pthread_t thread[THREAD_COUNT];
+    //create an array of params
+    inst params[THREAD_COUNT];
+
+    //create the instructions
+    for (int i = 0; i < THREAD_COUNT; i++) {
+        params[i].img = img;
+        params[i].filtered = filtered;
+        params[i].start = (img->width / THREAD_COUNT) * i;
+        if (i < THREAD_COUNT - 1) params[i].finish = (i + 1) * (img->width / THREAD_COUNT);
+        else params[i].finish = img->width;
+    }
+
+    //create the threads
+    for (int n = 0; n < THREAD_COUNT; n++) {
+        pthread_create(&thread[n], NULL, cheese_runner, &params[n]);
+    }
+
+    //join the threads
+    for (int n = 0; n < THREAD_COUNT; n++) {
+        pthread_join(thread[n], NULL);
+    }
+
+    //free the old array
+    Pixel** temp = img->pArr;
+    img->pArr = filtered;
+    for (int i = 0; i < img->height; i++) {
+        free(temp[i]);
+    }
+    free(temp);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -606,8 +558,6 @@ int main(int argc, char* argv[]) {
     //create the new image
     Image* img = image_create(pixels, dib_header.width, dib_header.height);
 
-    struct thread_info** infos = (struct thread_info**)malloc(sizeof(struct thread_info*) * THREAD_COUNT);
-
 
     //apply blur or swiss cheese filter based on the flag
     while ((filter = getopt(argc, argv, filters)) != -1) {
@@ -657,8 +607,6 @@ int main(int argc, char* argv[]) {
     //dealloc mem
     free(img);
     free(pixels);
-    //free(result);
-
 
     printf("Success! Your filtered image has been saved to the root folder.\n");
     return EXIT_SUCCESS;
