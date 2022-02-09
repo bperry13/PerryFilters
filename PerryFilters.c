@@ -71,14 +71,20 @@ typedef struct Pixel {
     unsigned char r,g,b;
 } Pixel;
 
-typedef struct inst {
+typedef struct Instruction {
     Image *img;
     Pixel** filtered; // write to this with filter applied
     // int first_col;
     // int last_col;
     int start;
     int finish;
-} inst;
+} Instruction;
+
+typedef struct Circle {
+    int x;
+    int y;
+    int radius;
+} Circle;
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -175,7 +181,7 @@ Image* image_create(struct Pixel** pArr, int width, int height) {
 
 void *blur_runner(void *args) {
 
-    inst *params = (inst *) args;
+    Instruction *params = (Instruction *) args;
     int red, blue, green, counter;
     int height, width;
 
@@ -390,7 +396,7 @@ void blur_filter(Image* img) {
     //create an array of threads
     pthread_t thread[THREAD_COUNT];
     //create an array of params
-    inst params[THREAD_COUNT];
+    Instruction params[THREAD_COUNT];
 
     //create the instructions
     for (int i = 0; i < THREAD_COUNT; i++) {
@@ -426,7 +432,7 @@ void blur_filter(Image* img) {
 * @param args: image for pixel array
 */
 void *cheese_runner(void *args) {
-    inst *params = (inst *) args;
+    Instruction *params = (Instruction *) args;
     int red, blue, green, counter;
     int height, width;
     int x, y;
@@ -454,7 +460,50 @@ void *cheese_runner(void *args) {
             filtered[y][x].b = blue;
         }
     }
+
+    /* This section of code doensn't work properly :(
+    //get total holes
+    int total_holes, max_radius, min_radius;
+
+    if (params->img->width <= params->img->height) {
+        total_holes = rand() % (params->img->width / 12); //~8%
+        max_radius = params->img->width / 8; //~12%
+        min_radius = params->img->width / 16; //~4%
+    } else {
+        total_holes = rand() % (params->img->height / 12); //~8%
+        max_radius = params->img->height / 8; //~12%
+        min_radius = params->img->height / 16; //~4%
+    }
+
+    //create random points
+    Circle *circle = malloc(sizeof(Circle) * total_holes);
+    for (int i = 0; i < total_holes; i++) {
+        int radius = (rand() % max_radius) + min_radius;
+        int rand_x = rand() % params->img->width;
+        int rand_y = rand() % params->img->height;
+
+        circle[i].x = rand_x;
+        circle[i].y = rand_y;
+        circle[i].radius = radius;
+    }
+
+    //turn pixels inside radius to black if pixel is inside radius
+    //i from y-r to y+r
+    int i = 0, j = 0;
+    int r = circle[i].radius;
+    for (i = 0; i < params->img->width; i++) {
+        //j from x-r to x+r
+        for (j = 0; j < params->img->height; j++) {
+            if ((i-circle[i].x)^2 + (j-circle[i].y)^2 <= circle[i].radius^2) {
+                //turn pixel black
+                filtered[j][i].r = 0;
+                filtered[j][i].b = 0;
+                filtered[j][i].g = 0;
+            }
+        }
+    }*/
 }
+
 
 /**
 * Swiss Cheese Filter
@@ -472,7 +521,7 @@ void cheese_filter(Image* img) {
     //create an array of threads
     pthread_t thread[THREAD_COUNT];
     //create an array of params
-    inst params[THREAD_COUNT];
+    Instruction params[THREAD_COUNT];
 
     //create the instructions
     for (int i = 0; i < THREAD_COUNT; i++) {
@@ -607,6 +656,7 @@ int main(int argc, char* argv[]) {
     //dealloc mem
     free(img);
     free(pixels);
+    //free(circle);
 
     printf("Success! Your filtered image has been saved to the root folder.\n");
     return EXIT_SUCCESS;
