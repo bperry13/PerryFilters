@@ -20,3 +20,5 @@ To run swiss cheese:
 ./PerryFilters -c test1wonderbread.bmp test1_c_output.bmp
 ./PerryFilters -c test2.bmp test2_c_output.bmp
 ./PerryFilters -c test3.bmp test3_c_output.bmp
+Note: The code for the holes doesn't work so it's commented out. I gave it
+my best shot :(
